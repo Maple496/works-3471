@@ -1,14 +1,18 @@
 // src/entities.js —— 规则与几何实体
 // 职责：五连判定、屏幕坐标↔棋盘坐标换算、棋盘格子尺寸管理
 
-var CELL = 36; // 每格像素（uiLayout 时重算）
+var CELL = 36; // 每格像素（boardFit 时重算）
 var MARGIN = 20; // 棋盘边距
 
-// 五连判定：以 (x,y) 为落子点，检查四方向是否成五；返回胜方棋色或 0
+// 五连判定：以 (x,y) 为落子点，检查四方向（横、竖、两条斜线）是否成五
+// 连续同色计数（含落子点本身），≥5 即返回该棋色；返回胜方棋色或 0
 function checkFive(board, x, y) {
-  var dirs = [[1, 0], [0, 1], [1, 1], [1, -1]];
+  if (!board || y < 0 || y >= board.length) return 0;
+  var row = board[y];
+  if (!row || x < 0 || x >= row.length) return 0;
   var p = board[y][x];
   if (!p) return 0;
+  var dirs = [[1, 0], [0, 1], [1, 1], [1, -1]];
   for (var i = 0; i < dirs.length; i++) {
     var dx = dirs[i][0], dy = dirs[i][1];
     var cnt = 1;
@@ -40,7 +44,11 @@ function checkFive(board, x, y) {
   return 0;
 }
 
+// 当前布局下棋盘格数（由 boardFit 记录，供换算使用）
+var BOARD_N = 15;
+
 // 屏幕坐标 → 棋盘格坐标；不在盘内返回 null
+// boardPixelSize：棋盘绘制区域的边长（含边距）
 function hitToCell(px, py, boardPixelSize) {
   var inner = boardPixelSize - 2 * MARGIN;
   if (inner <= 0) return null;
@@ -55,7 +63,7 @@ function hitToCell(px, py, boardPixelSize) {
   return { x: x, y: y };
 }
 
-// 棋盘格坐标 → 格中心屏幕坐标
+// 棋盘格坐标 → 格中心屏幕坐标（与 hitToCell 互逆）
 function cellToPixel(x, y) {
   return {
     px: MARGIN + x * CELL + CELL / 2,
@@ -63,8 +71,10 @@ function cellToPixel(x, y) {
   };
 }
 
-// 布局变化时按画布尺寸重算 CELL/MARGIN
+// 布局变化时按画布尺寸重算 CELL/MARGIN，保证 boardN 路棋盘完整放入画布
 function boardFit(canvasW, canvasH, boardN) {
+  if (!(boardN > 0)) boardN = 15;
+  BOARD_N = boardN;
   var minSide = Math.min(canvasW, canvasH);
   CELL = Math.max(8, Math.floor((minSide - 2 * 12) / boardN));
   var inner = CELL * boardN;

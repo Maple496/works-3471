@@ -4,6 +4,7 @@
 var __g = null;        // 2D 上下文引用
 var __elRoot = null;   // 覆盖层容器（absolute，挂 stage）
 var __onCanvasClick = null; // 点击监听引用，destroy 时解绑
+var __canvasRef = null;     // 画布引用，destroy 时解绑用
 
 var __btnUndo = null;    // 悔棋按钮
 var __txtTurn = null;    // 轮次/胜负文本
@@ -78,6 +79,7 @@ function __updateTurnText() {
 
 function uiInit(canvas, g, stage) {
   __g = g;
+  __canvasRef = canvas;
   __elRoot = document.createElement('div');
   __elRoot.style.position = 'absolute';
   __elRoot.style.left = '0';
@@ -197,15 +199,8 @@ function uiRender(g, w, h) {
 }
 
 function uiDestroy() {
-  var canvas = null;
-  if (__onCanvasClick) {
-    // 通过闭包外不可得 canvas，engine 侧提供解绑入口；此处直接解绑 __g 所在画布
-    try {
-      if (typeof __g.canvas !== 'undefined' && __g.canvas) canvas = __g.canvas;
-    } catch (e) {}
-    if (canvas && canvas.removeEventListener) {
-      canvas.removeEventListener('click', __onCanvasClick);
-    }
+  if (__onCanvasClick && __canvasRef && __canvasRef.removeEventListener) {
+    __canvasRef.removeEventListener('click', __onCanvasClick);
   }
   __onCanvasClick = null;
   if (__elRoot && __elRoot.parentNode) {
@@ -214,5 +209,6 @@ function uiDestroy() {
   __elRoot = null;
   __btnUndo = null;
   __txtTurn = null;
+  __canvasRef = null;
   __g = null;
 }
