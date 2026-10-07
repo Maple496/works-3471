@@ -6,6 +6,7 @@ var __board = null;        // 棋盘：BOARD_N x BOARD_N，0 空 / 1 黑 / 2 白
 var __history = [];        // 历史栈：{x, y, player}，供悔棋
 var __turn = 1;            // 当前轮次：1 黑 2 白
 var __winner = 0;          // 0 未分胜负，否则胜方棋色
+var __winLine = null;      // 胜方五连坐标数组 [{x,y}...]，未分胜负为 null
 
 function engineInit() {
   engineReset();
@@ -21,6 +22,7 @@ function engineReset() {
   __history = [];
   __turn = 1;
   __winner = 0;
+  __winLine = null;
 }
 
 // 在 (x,y) 落子；成功返回 true，非法（越界/已占/已结束）返回 false
@@ -39,6 +41,7 @@ function enginePlace(x, y) {
 
   if (typeof checkFive === 'function' && checkFive(__board, x, y)) {
     __winner = player;
+    __winLine = engineGetWinLine();
   } else {
     __turn = (player === 1) ? 2 : 1;
   }
@@ -52,6 +55,7 @@ function engineUndo() {
   __board[last.y][last.x] = 0;
   __turn = last.player;
   __winner = 0;
+  __winLine = null;
   return true;
 }
 
@@ -59,6 +63,31 @@ function engineUndo() {
 function engineGetBoard() { return __board; }
 function engineGetTurn() { return __turn; }
 function engineGetWinner() { return __winner; }
+
+// 返回胜方五连坐标数组 [{x,y} x5]；未分胜负返回 null（供 ui 高亮）
+function engineGetWinLine() {
+  if (__winner === 0) return null;
+  var dirs = [[1, 0], [0, 1], [1, 1], [1, -1]];
+  for (var y = 0; y < BOARD_N; y++) {
+    for (var x = 0; x < BOARD_N; x++) {
+      if (__board[y][x] !== __winner) continue;
+      for (var d = 0; d < dirs.length; d++) {
+        var dx = dirs[d][0], dy = dirs[d][1];
+        var ex = x + dx * 4, ey = y + dy * 4;
+        if (ex < 0 || ex >= BOARD_N || ey < 0 || ey >= BOARD_N) continue;
+        var line = [];
+        var ok = true;
+        for (var k = 0; k < 5; k++) {
+          var cx = x + dx * k, cy = y + dy * k;
+          if (__board[cy][cx] !== __winner) { ok = false; break; }
+          line.push({ x: cx, y: cy });
+        }
+        if (ok) return line;
+      }
+    }
+  }
+  return null;
+}
 
 // 每帧逻辑（当前为轮询空转，交互驱动为主）
 function engineTick() {

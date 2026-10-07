@@ -63,7 +63,7 @@ function __updateTurnText() {
       var turn = 1;
       try {
         if (typeof engineGetTurn === 'function') turn = engineGetTurn();
-        else {
+        else if (b) {
           var cnt = 0;
           for (var r = 0; r < BOARD_N; r++)
             for (var c = 0; c < BOARD_N; c++)
@@ -113,9 +113,10 @@ function uiInit(canvas, g, stage) {
     var rect = canvas.getBoundingClientRect();
     var x = ev.clientX - rect.left;
     var y = ev.clientY - rect.top;
-    var cellIdx = hitToCell(x, y);
-    if (!cellIdx) return;
-    var r = cellIdx.r, c = cellIdx.c;
+    var hit = hitToCell(x, y);
+    if (!hit) return;
+    // hitToCell 返回 {x, y}：x 是列索引 c，y 是行索引 r
+    var c = hit.x, r = hit.y;
     if (r == null || c == null || r < 0 || c < 0 || r >= BOARD_N || c >= BOARD_N) return;
     if (typeof enginePlace === 'function') enginePlace(r, c);
     __updateTurnText();
@@ -123,7 +124,7 @@ function uiInit(canvas, g, stage) {
   canvas.addEventListener('click', __onCanvasClick);
 }
 
-// 尺寸变化：重排棋盘与覆盖层
+// 尺寸变化：重排棋盘与覆盖层（布局值以 uiLayout 传出的 ox/oy 为准）
 function uiLayout(w, h) {
   __lastW = w; __lastH = h;
   var fit = boardFit(w, h, BOARD_N);

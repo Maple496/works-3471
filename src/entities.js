@@ -44,18 +44,26 @@ function checkFive(board, x, y) {
   return 0;
 }
 
-// 当前布局下棋盘格数（由 boardFit 记录，供换算使用）
+// 当前布局状态（由 boardFit 记录，供换算使用）
+// BOARD_N：棋盘路数；BOARD_OX/BOARD_OY：棋盘绘制原点（格 (0,0) 左上角的屏幕坐标）
 var BOARD_N = 15;
+var BOARD_OX = MARGIN;
+var BOARD_OY = MARGIN;
 
 // 屏幕坐标 → 棋盘格坐标；不在盘内返回 null
-// boardPixelSize：棋盘绘制区域的边长（含边距）
+// px/py：屏幕坐标；boardPixelSize：棋盘绘制区域的边长（含边距），
+// 可省略（默认由当前 BOARD_N * CELL + 2 * MARGIN 推出）
+// 返回 {x, y}：棋盘格的列、行下标（0 起，x 列 / y 行）
 function hitToCell(px, py, boardPixelSize) {
+  if (!(boardPixelSize > 0)) {
+    boardPixelSize = BOARD_N * CELL + 2 * MARGIN;
+  }
   var inner = boardPixelSize - 2 * MARGIN;
   if (inner <= 0) return null;
-  var n = Math.round(inner / CELL);
+  var n = BOARD_N;
   if (n <= 0) return null;
-  var lx = px - MARGIN;
-  var ly = py - MARGIN;
+  var lx = px - BOARD_OX;
+  var ly = py - BOARD_OY;
   if (lx < 0 || ly < 0 || lx >= inner || ly >= inner) return null;
   var x = Math.floor(lx / CELL);
   var y = Math.floor(ly / CELL);
@@ -66,12 +74,14 @@ function hitToCell(px, py, boardPixelSize) {
 // 棋盘格坐标 → 格中心屏幕坐标（与 hitToCell 互逆）
 function cellToPixel(x, y) {
   return {
-    px: MARGIN + x * CELL + CELL / 2,
-    py: MARGIN + y * CELL + CELL / 2
+    px: BOARD_OX + x * CELL + CELL / 2,
+    py: BOARD_OY + y * CELL + CELL / 2
   };
 }
 
 // 布局变化时按画布尺寸重算 CELL/MARGIN，保证 boardN 路棋盘完整放入画布
+// 返回 { cell, margin, ox, oy }：ox/oy 为棋盘原点（格 (0,0) 左上角屏幕坐标），
+// 满足互逆性：cellToPixel(hitToCell(px,py)) 的中心与 hitToCell(cellToPixel(x,y)) 一致
 function boardFit(canvasW, canvasH, boardN) {
   if (!(boardN > 0)) boardN = 15;
   BOARD_N = boardN;
@@ -79,5 +89,7 @@ function boardFit(canvasW, canvasH, boardN) {
   CELL = Math.max(8, Math.floor((minSide - 2 * 12) / boardN));
   var inner = CELL * boardN;
   MARGIN = Math.max(0, Math.floor((Math.min(canvasW, canvasH) - inner) / 2));
-  return { cell: CELL, margin: MARGIN };
+  BOARD_OX = MARGIN;
+  BOARD_OY = MARGIN;
+  return { cell: CELL, margin: MARGIN, ox: BOARD_OX, oy: BOARD_OY };
 }
