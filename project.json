@@ -1,0 +1,26 @@
+{
+  "name": "交互五子棋",
+  "brief": "黑白轮流落子的经典五连珠对战，支持悔棋与轮次提示。",
+  "work_ref": "WORKS-3471",
+  "entry": "src/main.js",
+  "status": "wip",
+  "files": [
+    {
+      "path": "src/engine.js",
+      "role": "状态与主循环：棋局数据、落子/悔棋流程、回合切换、胜负判定调度"
+    },
+    {
+      "path": "src/entities.js",
+      "role": "规则实体：胜负判定、坐标换算、棋盘几何参数"
+    },
+    {
+      "path": "src/ui.js",
+      "role": "界面与渲染：棋盘绘制、棋子绘制、轮次/胜负文本、点击落子与悔棋按钮"
+    },
+    {
+      "path": "src/main.js",
+      "role": "入口：创建画布、注册边界跟随、装配引擎与界面、Work.register 容器合同（mount/destroy）"
+    }
+  ],
+  "generated_by": "proj_forge（AI 工程工坊）"
+}
